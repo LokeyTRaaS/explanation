@@ -1,0 +1,80 @@
+# Versions follow conventional commits on main:
+# feat → minor, fix → patch, BREAKING CHANGE → major.
+# A push with none of those does not publish a release.
+
+name: Presentation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+
+      - name: Render the PDF
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: task pdf
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lokey-explanation-pdf
+          path: presentation/lokey.pdf
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install release tooling
+        run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: lokey-explanation-pdf
+          path: presentation
+
+      - name: Confirm the PDF is in place
+        run: |
+          if [ ! -f presentation/lokey.pdf ]; then
+            found=$(find presentation -name lokey.pdf -print -quit)
+            test -n "$found"
+            mv "$found" presentation/lokey.pdf
+          fi
+
+      - name: Publish the semver release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

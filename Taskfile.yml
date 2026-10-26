@@ -1,0 +1,47 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Build the HTML and PDF presentation
+    cmds:
+      - task: html
+      - task: pdf
+
+  deps:
+    desc: Install the locked Node toolchain
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules/.bin/marp
+    cmds:
+      - npm ci
+
+  html:
+    desc: Render the Marp deck to HTML
+    deps: [deps]
+    sources:
+      - presentation/lokey.md
+      - presentation/lokey-theme.css
+      - presentation/assets/**/*
+    generates:
+      - presentation/lokey.html
+    cmds:
+      - npx --no-install marp presentation/lokey.md --html --theme presentation/lokey-theme.css --allow-local-files -o presentation/lokey.html
+
+  pdf:
+    desc: Render the Marp deck to PDF
+    deps: [deps]
+    sources:
+      - presentation/lokey.md
+      - presentation/lokey-theme.css
+      - presentation/assets/**/*
+    generates:
+      - presentation/lokey.pdf
+    cmds:
+      - npx --no-install marp presentation/lokey.md --pdf --theme presentation/lokey-theme.css --allow-local-files -o presentation/lokey.pdf
+
+  clean:
+    desc: Remove generated HTML and PDF
+    cmds:
+      - rm -f presentation/lokey.html presentation/lokey.pdf

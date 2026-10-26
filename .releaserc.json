@@ -1,0 +1,24 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    ["@semantic-release/commit-analyzer", { "preset": "conventionalcommits" }],
+    ["@semantic-release/release-notes-generator", { "preset": "conventionalcommits" }],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "cp presentation/lokey.pdf lokey-explanation-${nextRelease.gitTag}.pdf"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "lokey-explanation-*.pdf",
+            "label": "Lokey explanation (PDF)"
+          }
+        ]
+      }
+    ]
+  ]
+}
