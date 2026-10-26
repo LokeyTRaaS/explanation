@@ -45,3 +45,4 @@ tasks:
     desc: Remove generated HTML and PDF
     cmds:
       - rm -f presentation/lokey.html presentation/lokey.pdf
+
